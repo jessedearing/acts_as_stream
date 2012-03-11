@@ -7,18 +7,19 @@ require "acts_as_stream/version"
 Gem::Specification.new do |s|
   s.name        = "acts_as_stream"
   s.version     = ActsAsStream::VERSION
-  s.authors     = ["TODO: Your name"]
-  s.email       = ["TODO: Your email"]
-  s.homepage    = "TODO"
-  s.summary     = "TODO: Summary of ActsAsStream."
-  s.description = "TODO: Description of ActsAsStream."
+  s.authors     = ["John Metta"]
+  s.email       = ["mail@johnmetta.com"]
+  s.homepage    = "http://github.com/mettadore/acts_as_stream.git"
+  s.summary     = "Rails injectable Redis-backed activity stream system"
+  s.description = "Rails injectable Redis-backed activity stream system"
 
-  s.files = Dir["{app,config,db,lib}/**/*"] + ["MIT-LICENSE", "Rakefile", "README.rdoc"]
+  s.files = Dir["{app,config,db,lib}/**/*"] + ["MIT-LICENSE", "Rakefile", "README.md"]
 
-  s.add_dependency "rails", "~> 3.2.2"
+  s.add_dependency "rails", "~> 3.2"
   s.add_dependency "redis"
 
   s.add_development_dependency "sqlite3"
+  s.add_development_dependency "acts_as_amico"
   s.add_development_dependency "rspec-rails"
   s.add_development_dependency "spork", '~> 0.9.0.rc'
   s.add_development_dependency 'guard-rspec'
