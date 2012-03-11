@@ -4,10 +4,21 @@ module ActsAsStream
     # Redis instance.
     attr_accessor :redis
 
-    attr_writer :namespace, :activity_key, :activity_scope, :activity_attr, :page_size
+    attr_writer :namespace,
+                :activity_key,
+                :activity_scope,
+                :activity_attr,
+                :page_size,
+                :activity_incr
 
     def configure
       yield self
+      if activity_incr.nil?
+        warn "You should really define :activity_incr in ActsAsStream Configuration. Using '#{ActsAsStream.namespace}:activity_counter', but that's pretty unsafe!"
+        @activity_incr = "#{ActsAsStream.namespace}:activity_counter"
+        ActsAsStream.redis.set @activity_incr, 0
+      end
+      ActsAsStream.redis.setnx(@activity_incr, 0)
     end
 
     def namespace
@@ -29,5 +40,10 @@ module ActsAsStream
     def page_size
       @page_size ||= 25
     end
+
+    def activity_incr
+      @activity_incr
+    end
+
   end
 end

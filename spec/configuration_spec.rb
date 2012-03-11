@@ -10,6 +10,7 @@ describe ActsAsStream::Configuration do
         configuration.activity_attr.should be(:id)
         configuration.page_size.should be(25)
         configuration.activity_attr.should be(:id)
+        configuration.activity_incr.should be(:activity_counter)
       end
     end
   end

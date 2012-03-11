@@ -7,8 +7,8 @@ describe ActsAsStream::StreamableObject do
     @admin = Factory :admin
     @widget = Factory :widget
     @thing = Factory :thing
-    @user_base = "redis_stream_test:user:activity"
-    @admin_base = "redis_stream_test:admin:actions"
+    @user_base = "redis_stream_test:activity"
+    @admin_base = "redis_stream_test:actions"
   end
 
   describe "loading" do
@@ -33,6 +33,5 @@ describe ActsAsStream::StreamableObject do
       @user.following_key.should eq("redis_stream_test:user:#{@user.id}:activity")
       @admin.following_key.should eq("redis_stream_test:admin:#{@admin.guid}:actions")
     end
-
   end
 end
