@@ -19,6 +19,9 @@ module ActsAsStream
 
     module InstanceMethods
 
+      def to_stream_hash
+        {self.class.name.tableize.singularize => {'id' => self.id, activity_attr.to_s => self.send(activity_attr)}}
+      end
       def activity_id
         self.send(self.class.activity_attr)
       end

@@ -11,7 +11,7 @@ Gem::Specification.new do |s|
   s.email       = ["mail@johnmetta.com"]
   s.homepage    = "http://github.com/mettadore/acts_as_stream.git"
   s.summary     = "Rails injectable Redis-backed activity stream system"
-  s.description = "Rails injectable Redis-backed activity stream system"
+  s.description = "Rails injectable Redis-backed activity stream system. This is an alpha release of code that I just wrote and put into production on 3/11/12. Send feedback and post bugs to the Github page, but use at your own risk!"
 
   s.files = Dir["{app,config,db,lib}/**/*"] + ["MIT-LICENSE", "Rakefile", "README.md"]
 

@@ -1,6 +1,15 @@
 # ActsAsStream
 A highly configurable activity stream system built on top of Redis
 
+## Warnings
+
+ * I've just written this today (3/11/12)
+ * The test suite is complete, but I haven't used it in production.
+ * I'm building it into a production app now
+ * It's probably going to be updated frequently
+ * You're welcome to use it, and I'd love feedback
+ * Caveat Downloader
+
 ## Installation
 
 Install

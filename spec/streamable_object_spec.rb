@@ -59,6 +59,10 @@ describe ActsAsStream::StreamableObject do
     usera.get_activity(:all).should =~ packages
   end
 
+  it "should provide a subset of object attributes for JSON hashing" do
+
+  end
+
   private
   def test_package number = nil
     if number
