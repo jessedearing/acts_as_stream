@@ -59,7 +59,6 @@ describe ActsAsStream::StreamableObject do
     usera.get_activity(:all).should =~ packages
   end
 
-
   private
   def test_package number = nil
     if number

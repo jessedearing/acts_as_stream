@@ -26,7 +26,7 @@ module ActsAsStream
         "#{self.class.activity_key_base}:#{activity_id}"
       end
       def following_key
-        "#{ActsAsStream.namespace}:#{self.class.name.downcase}:#{activity_id}:#{activity_scope}"
+        "#{ActsAsStream.namespace}:#{self.class.name.tableize.singularize}:#{activity_id}:#{activity_scope}"
       end
 
       def register_activity! package
