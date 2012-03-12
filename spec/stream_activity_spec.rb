@@ -66,7 +66,26 @@ describe ActsAsStream::StreamActivity do
       decode(pack).should == decode(hash.to_json)
     end
 
+    it "should respond correctly with an object that does not" do
+      class TestObject;end
+      options = @valid_options.dup
+      options[:object] = TestObject.new
+      pack = package(options)
+      options[:who] = options[:who].to_stream_hash
+      decode(pack).should == decode(options.to_json)
+    end
   end
+
+
+  describe ActsAsStream::StreamableObject do
+    it "should create a package with the instance method" do
+      options = @valid_options.dup
+      time = Time.now.to_i
+      options[:time] = time
+      decode(@user.package(:action => "Tested StreamActivity!", :object => @widget)).should == decode(package(options))
+    end
+  end
+
   private
 
   def decode json

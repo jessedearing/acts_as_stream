@@ -49,6 +49,13 @@ module ActsAsStream
         send(followers_attr)
       end
 
+      def package(options = {})
+        options.assert_valid_keys(:action, :object, :ignore_stream_hash_on)
+        options[:who] = self
+        options[:time] = Time.now.to_i
+        ActsAsStream.package options
+      end
+
       def get_activity options = {}
         if options == :all
           ActsAsStream.get_activity_for following_key,
