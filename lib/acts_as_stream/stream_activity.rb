@@ -17,7 +17,11 @@ module ActsAsStream
       [:who, :object].each do |opt|
         #unless we are ignoring the stream hash for this object, use StreamableObject.stream_hash
         unless opts[:ignore_stream_hash_on].include?(opt) or not opts[opt].respond_to?(:to_stream_hash)
-          opts[opt] = opts[opt].to_stream_hash
+          begin
+            opts[opt] = opts[opt].to_stream_hash
+          rescue NoMethodError
+            raise "The class #{opts[opt].class.name} does not have a method called #{opts[opt].activity_attr}. Perhaps you should look at your ActsAsStream configuration, or set :activity_attr"
+          end
         end
       end
 
