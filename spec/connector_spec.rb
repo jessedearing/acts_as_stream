@@ -8,6 +8,8 @@ describe ActsAsStream::Connector do
     @widget = Factory :widget
     @thing = Factory :thing
     @key = ActsAsStream.base_key
+    @sorted_key = "#{@key}:sorted"
+    @count = ActsAsStream.redis.zcard(@sorted_key)
     @package = test_package
   end
 
@@ -28,36 +30,29 @@ describe ActsAsStream::Connector do
 
   it "should register time keys with new activity" do
     # we're assuming this test will take less than one second!
-    time = Time.now.to_i
-    items = ActsAsStream.redis.zcard("#{@key}:time:#{time}")
+    time = Time.now.to_f
     id = ActsAsStream.register_new_activity! @package
 
     ActsAsStream.redis.get("#{@key}:#{id}").should == @package
-    score = ActsAsStream.redis.get("#{@key}:id:#{id}")
-    score.to_i.should == time
-    (ActsAsStream.redis.zcard("#{@key}:time:#{score}") - items).should be(1)
-    ActsAsStream.redis.zrevrange("#{@key}:time:#{score}",0,25,:with_scores => false).include?("#{id}").should be_true
+    ActsAsStream.redis.zcard(@sorted_key).should eq(@count + 1)
+    ActsAsStream.redis.zrevrange(@sorted_key,0,-1,:with_scores => false).include?("#{id}").should be_true
   end
 
   it "should remove all keys on deregistration" do
     # we're assuming this test will take less than one second!
     time = Time.now.to_i
-    count = ActsAsStream.redis.zcard("#{@key}:time:#{time}")
-    package = "########################################\n\n###################################"
+    package = test_package
     id = ActsAsStream.register_new_activity! package
 
     ActsAsStream.redis.get("#{@key}:#{id}").should == package
-    score = ActsAsStream.redis.get("#{@key}:id:#{id}")
-    score.to_i.should == time
-    (ActsAsStream.redis.zcard("#{@key}:time:#{score}") - count).should be(1)
-    ActsAsStream.redis.zrevrange("#{@key}:time:#{score}",0,25,:with_scores => false).include?("#{id}").should be_true
+    ActsAsStream.redis.zcard(@sorted_key).should eq(@count + 1)
+    ActsAsStream.redis.zrange(@sorted_key,0,-1,:with_scores => false).include?("#{id}").should be_true
 
     ActsAsStream.deregister_activity! id
 
     ActsAsStream.redis.get("#{@key}:#{id}").should be(nil)
-    ActsAsStream.redis.get("#{@key}:id:#{id}").should be(nil)
-#    ActsAsStream.redis.zcard("#{@key}:time:#{time}").should == count
-    ActsAsStream.redis.zrevrange("#{@key}:time:#{time}",0,25,:with_scores => false).include?("#{id}").should be_false
+    ActsAsStream.redis.zcard(@sorted_key).should eq(@count)
+    ActsAsStream.redis.zrange(@sorted_key,0,-1,:with_scores => false).include?(id).should be_false
   end
 
   it "should add a weighted record to the sorted set for a list of followers" do

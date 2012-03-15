@@ -10,6 +10,9 @@ A highly configurable activity stream system built on top of Redis
  * You're welcome to use it, and I'd love feedback
  * Caveat Downloader
 
+### Extra special notes
+The move to 0.0.3.alpha.1 involves a change to the key structure. See below.
+
 ## Installation
 
 Install
@@ -67,6 +70,51 @@ follower.get_activity.first
 ```
 
 ## Advanced Usage
+
+## Key structure
+
+### Activity Keys
+Keys for Redis activity packages are created using the format
+
+```
+<namespace>:<activity_scope>:<id>
+```
+
+where ```namespace``` and ```activity_scope``` are set in the ActsAsStream configuration and default to
+a base key of ```acts_as_stream:activity``` and id is the value of ```activity_incr``` which defaults to
+```acts_as_stream:activity:activity_counter```
+
+The Activity ID is also added to a sorted set with the key
+
+```
+<namespace>:<activity_scope>:sorted <time> <id>
+```
+
+where <time> is floating point seconds since the epoch and <id> is as above. This allows for time-based
+sorting of activities.
+
+### Followers
+
+Followers are notified by an arbitrary string key that can literally be whatever you want, but which defaults
+to
+
+```
+<namespace>:<activity_scope>:<streamable_object_id> <time> <activity_id>
+```
+
+where ```streamable_object_id``` is the value of ```activity_attr```, both of which are set in the configuration options.
+```activity_attr``` defaults to ```id``` and can be set on a per model basis. ```activity_id``` is the id of the activity
+given above.
+
+Activities are also stored as a list keyed by id
+
+```
+<namespace>:<activity_scope>:followers:<activity_id> <follower_key>
+```
+
+where ```follower_key``` is the key used above, and activity_id is the id of the activity.
+
+The following system allows for time sorted organization of activities, and ability to see all "viewers" of an activity.
 
 ## Configuration
 

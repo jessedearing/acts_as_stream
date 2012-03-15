@@ -22,14 +22,14 @@ module ActsAsStream
       def to_stream_hash
         {self.class.name.tableize.singularize => {'id' => self.id, activity_attr.to_s => self.send(activity_attr)}}
       end
-      def activity_id
+      def streamable_object_id
         self.send(self.class.activity_attr)
       end
       def activity_key
-        "#{self.class.activity_key_base}:#{activity_id}"
+        "#{self.class.activity_key_base}:#{streamable_object_id}"
       end
       def following_key
-        "#{ActsAsStream.namespace}:#{self.class.name.tableize.singularize}:#{activity_id}:#{activity_scope}"
+        "#{ActsAsStream.namespace}:#{self.class.name.tableize.singularize}:#{streamable_object_id}:#{activity_scope}"
       end
 
       def register_activity! package
@@ -61,6 +61,9 @@ module ActsAsStream
           ActsAsStream.get_activity_for following_key,
                                         :page_size => activity_count,
                                         :page => 1
+        elsif options[:since]
+          time = options[:since]
+
         else
           options = {:page_size => ActsAsStream.page_size, :page => 1}.merge options
           ActsAsStream.get_activity_for following_key, :page_size => options[:page_size], :page => options[:page]

@@ -4,26 +4,20 @@ module ActsAsStream
     def register_new_activity! package = nil
       return if package.nil?
       id = increment!
-      this_time = time
       ActsAsStream.redis.multi do
         #Add the key and package to the system
         ActsAsStream.redis.set "#{base_key}:#{id}", package
-        #Add a timed key, scored by id, and an id-based key
-        ActsAsStream.redis.zadd "#{base_key}:time:#{this_time}", id, id
-        ActsAsStream.redis.set "#{base_key}:id:#{id}", this_time
+        #Add the id to a sorted set scored by time
+        ActsAsStream.redis.zadd "#{base_key}:sorted", Time.now.to_f, id
       end
-      raise "### Unable to set Time keys!" if ActsAsStream.redis.get("#{base_key}:id:#{id}") != this_time.to_s
-      #return the current activity ID
       id
     end
 
     def deregister_activity! ident
       return if ident.nil?
-      score = ActsAsStream.redis.get "#{base_key}:id:#{ident}"
       ActsAsStream.redis.multi do
         ActsAsStream.redis.del "#{base_key}:#{ident}"
-        ActsAsStream.redis.zrem "#{base_key}:time:#{score}", ident
-        ActsAsStream.redis.del "#{base_key}:id:#{ident}"
+        ActsAsStream.redis.zrem "#{base_key}:sorted", ident
       end
       deregister_followers! ident
     end
@@ -32,11 +26,9 @@ module ActsAsStream
       options.assert_valid_keys(:following_keys, :activity_id)
       return if options[:following_keys].nil? or options[:activity_id].nil?
       raise ":following_keys must be an array of keys" if not options[:following_keys].is_a? Array
-      time = Time.now.to_i
-
       ActsAsStream.redis.multi do
         options[:following_keys].each do |key|
-          ActsAsStream.redis.zadd key, time, options[:activity_id]
+          ActsAsStream.redis.zadd key, Time.now.to_f, options[:activity_id]
           ActsAsStream.redis.lpush "#{base_key}:followers:#{options[:activity_id]}", key
         end
       end
@@ -69,6 +61,10 @@ module ActsAsStream
       ending_offset = (starting_offset + options[:page_size]) - 1
 
       ActsAsStream.redis.zrevrange(follower_key, starting_offset, ending_offset, :with_scores => false).map{|i| get_activity i}
+    end
+
+    def get_activity_since follower_key, since = 2.days.ago
+
     end
 
     def get_activity id

@@ -22,7 +22,7 @@ module ActsAsStream
     end
 
     def namespace
-      @namespace ||= :activity_stream
+      @namespace ||= :acts_as_stream
     end
 
     def activity_key
