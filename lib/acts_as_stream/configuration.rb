@@ -9,7 +9,8 @@ module ActsAsStream
                 :activity_scope,
                 :activity_attr,
                 :page_size,
-                :activity_incr
+                :activity_incr,
+                :mentions_scope
 
     def configure
       yield self
@@ -43,6 +44,10 @@ module ActsAsStream
 
     def activity_incr
       @activity_incr
+    end
+
+    def mentions_scope
+      @mentions_scope ||= :mentions
     end
 
   end

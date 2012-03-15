@@ -1,5 +1,5 @@
 class Widget < ActiveRecord::Base
-  acts_as_stream :activity_scope => :people_doings
+  acts_as_stream :activity_scope => :people_doings, :ignore_mentions => true
   acts_as_amico
 
   def all_followers

@@ -99,7 +99,7 @@ Followers are notified by an arbitrary string key that can literally be whatever
 to
 
 ```
-<namespace>:<activity_scope>:<streamable_object_id> <time> <activity_id>
+<namespace>:<class.name.tableize.singularize>:<streamable_object_id>:<activity_scope> <time> <activity_id>
 ```
 
 where ```streamable_object_id``` is the value of ```activity_attr```, both of which are set in the configuration options.
@@ -115,6 +115,23 @@ Activities are also stored as a list keyed by id
 where ```follower_key``` is the key used above, and activity_id is the id of the activity.
 
 The following system allows for time sorted organization of activities, and ability to see all "viewers" of an activity.
+
+### Mentions
+
+Unless ```:ignore_mentions``` is provided to the acts_as_stream method, mentioned objects can be notified if they were "discussed" in activity. The key
+pattern for this is
+
+```
+<namespace>:<class.name.tableize.singularize>:<streamable_object_id>:<mentions_scope> <time> <activity_id>
+```
+
+and the list by id is
+```
+<namespace>:<activity_scope>:<mentions_key>:<activity_id> <mentioned_key>
+```
+
+The attribute ```mentions_scope``` is provided in the ActsAsStream configuration and defaults to ```:mentions```. This can
+be overwritten by sending :mentions_scope as an attribute to acts_as_stream.
 
 ## Configuration
 

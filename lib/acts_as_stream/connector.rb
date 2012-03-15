@@ -20,6 +20,7 @@ module ActsAsStream
         ActsAsStream.redis.zrem "#{base_key}:sorted", ident
       end
       deregister_followers! ident
+      deregister_mentioned! ident
     end
 
     def register_followers! options = {}
@@ -48,6 +49,33 @@ module ActsAsStream
       end
     end
 
+    def register_mentions! options = {}
+      options.assert_valid_keys(:mentioned_keys, :activity_id)
+      return if options[:mentioned_keys].nil? or options[:activity_id].nil?
+      raise ":mentioned_keys must be an array of keys" if not options[:mentioned_keys].is_a? Array
+      ActsAsStream.redis.multi do
+        options[:mentioned_keys].each do |key|
+          ActsAsStream.redis.zadd key, Time.now.to_f, options[:activity_id]
+          ActsAsStream.redis.lpush "#{base_key}:mentions:#{options[:activity_id]}", key
+        end
+      end
+    end
+
+    def deregister_mentioned! activity_id = nil
+      return if activity_id.nil?
+      mentioned_key = "#{base_key}:mentions:#{activity_id}"
+      return if mentioned_key.nil?
+      len = ActsAsStream.redis.llen mentioned_key
+      mentioned = ActsAsStream.redis.lrange mentioned_key, 0, len
+      return if mentioned.nil?
+      ActsAsStream.redis.multi do
+        mentioned.each do |f|
+          ActsAsStream.redis.zrem f, activity_id
+        end
+        ActsAsStream.redis.del "#{base_key}:mentions:#{activity_id}"
+      end
+    end
+    
     def get_activity_for follower_key, options = {}
       options = {:page => 1, :page_size => ActsAsStream.page_size}.merge options
       options[:page] = 1 if options[:page] < 1
