@@ -88,6 +88,23 @@ module ActsAsStream
       def mentions_key
         "#{ActsAsStream.namespace}:#{self.class.name.tableize.singularize}:#{streamable_object_id}:#{mentions_scope}"
       end
+      def get_mentions options = {}
+        if options == :all
+          ActsAsStream.get_activity_for mentions_key,
+                                        :page_size => activity_count,
+                                        :page => 1
+        elsif options[:since]
+          time = options[:since]
+
+        else
+          options = {:page_size => ActsAsStream.page_size, :page => 1}.merge options
+          ActsAsStream.get_activity_for mentions_key, :page_size => options[:page_size], :page => options[:page]
+        end
+      end
+
+      def mentions_count
+        ActsAsStream.redis.zcard mentions_key
+      end
     end
   end
 end

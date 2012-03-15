@@ -27,6 +27,15 @@ describe ActsAsStream::StreamableObject do
     @user.activity_key.should eq("#{@user_base}:#{@user.id}")
     @admin.activity_key.should eq("#{@admin_base}:#{@admin.guid}")
   end
+  it "should return a paged list of activity packages" do
+    usera = Factory :user
+    packages = (1..26).collect{|i| test_package i}
+    usera.follow! @user
+    packages.each{|p| @user.register_activity! p}
+    usera.get_activity.should =~ packages[1..25]
+    usera.get_activity(:page_size => 10).size.should be(10)
+    usera.get_activity(:all).should =~ packages
+  end
 
   describe "Followers" do
     it "should provide a proper following key" do
@@ -73,20 +82,19 @@ describe ActsAsStream::StreamableObject do
       @user.get_follower_keys.should =~ users.map{|u| u.following_key}
     end
 
-
-  end
-
-  it "should return a paged list of activity packages" do
-    usera = Factory :user
-    packages = (1..26).collect{|i| test_package i}
-    usera.follow! @user
-    packages.each{|p| @user.register_activity! p}
-    usera.get_activity.should =~ packages[1..25]
-    usera.get_activity(:page_size => 10).size.should be(10)
-    usera.get_activity(:all).should =~ packages
-  end
-
-  it "should provide a subset of object attributes for JSON hashing" do
+    it "should return a paged list of activity packages" do
+      usera = Factory :user
+      packages = (1..26).collect{|i| test_package i}
+      usera.follow! @user
+      packages.each do |p|
+        id = @user.register_activity! p
+        @user.register_mentions! :activity_id => id, :mentioned_keys => usera.mentions_key
+      end
+      usera.get_mentions.should =~ packages[1..25]
+      usera.get_mentions(:page_size => 10).size.should be(10)
+      usera.mentions_count.should be(26)
+      usera.get_mentions(:all).should =~ packages
+    end
 
   end
 
