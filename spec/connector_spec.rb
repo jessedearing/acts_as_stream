@@ -94,7 +94,7 @@ describe ActsAsStream::Connector do
 
       followers.each do |f|
         ActsAsStream.redis.zcard(f).should be(1)
-        ActsAsStream.redis.zrevrange(f,0,25,:with_scores=>false).should =~ ["#{id}"]
+        ActsAsStream.redis.zrevrange(f,0,-1,:with_scores=>false).should =~ ["#{id}"]
         ActsAsStream.redis.lrange("#{@key}:followers:#{id}",0,15).include?(f).should be_true
       end
       ActsAsStream.redis.llen("#{@key}:followers:#{id}").should be(3)
@@ -109,6 +109,7 @@ describe ActsAsStream::Connector do
       ActsAsStream.total_pages(key).should be(1)
       ActsAsStream.get_activity_for(key).should =~ packages
       ActsAsStream.get_activity_for(key, :page_size => 2).size.should be(2)
+      ActsAsStream.redis.zrevrange(key,0,-1,:with_scores=>false).count.should be(3)
       ActsAsStream.get_activity_for(key, :page_size => 2, :page => 10).count.should be(1)
     end
 
@@ -119,7 +120,7 @@ describe ActsAsStream::Connector do
 
       followers.each do |f|
         ActsAsStream.redis.zcard(f).should be(1)
-        ActsAsStream.redis.zrevrange(f,0,25,:with_scores=>false).should =~ ["#{id}"]
+        ActsAsStream.redis.zrevrange(f,0,-1,:with_scores=>false).should =~ ["#{id}"]
         ActsAsStream.redis.lrange("#{@key}:followers:#{id}",0,15).include?(f).should be_true
       end
       ActsAsStream.redis.llen("#{@key}:followers:#{id}").should be(3)

@@ -76,23 +76,23 @@ module ActsAsStream
       end
     end
     
-    def get_activity_for follower_key, options = {}
+    def get_activity_for key, options = {}
+      offsets = get_offsets({:key => key}.merge options)
+      ActsAsStream.redis.zrevrange(key, offsets[:start], offsets[:end], :with_scores => false).map{|i| get_activity i}
+    end
+
+    def get_offsets(options = {})
       options = {:page => 1, :page_size => ActsAsStream.page_size}.merge options
       options[:page] = 1 if options[:page] < 1
 
-      if options[:page] > total_pages(follower_key, options[:page_size])
-        options[:page] = total_pages(follower_key, options[:page_size])
+      if options[:page] > total_pages(options[:key], options[:page_size])
+        options[:page] = total_pages(options[:key], options[:page_size])
       end
 
       starting_offset = ((options[:page] - 1) * options[:page_size])
       starting_offset = 0 if starting_offset < 0
       ending_offset = (starting_offset + options[:page_size]) - 1
-
-      ActsAsStream.redis.zrevrange(follower_key, starting_offset, ending_offset, :with_scores => false).map{|i| get_activity i}
-    end
-
-    def get_activity_since follower_key, since = 2.days.ago
-
+      {:start => starting_offset, :end => ending_offset}
     end
 
     def get_activity id
