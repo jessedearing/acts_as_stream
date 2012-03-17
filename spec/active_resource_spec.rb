@@ -36,11 +36,11 @@ describe "ActiveResource Objects" do
     @obj_123.class.activity_key_base.should == "redis_stream_test:rest_activity"
   end
   it "should provide a proper activity key" do
-    @obj_123.activity_key.should eq("redis_stream_test:rest_activity:#{@obj_123.id}")
+    @obj_123.activity_key.should eq("redis_stream_test:rest_activity:by:rest_object:#{@obj_123.id}")
   end
 
   it "should provide a proper following key" do
-    @obj_123.following_key.should eq("redis_stream_test:rest_object:#{@obj_123.id}:rest_activity")
+    @obj_123.following_key.should eq("redis_stream_test:rest_activity:for:rest_object:#{@obj_123.id}")
   end
 
   it "should return a list of all followers as a keyed list" do

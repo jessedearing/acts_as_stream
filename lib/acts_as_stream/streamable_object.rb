@@ -8,7 +8,12 @@ module ActsAsStream
     module ClassMethods
 
       def acts_as_stream options = {}
-        cattr_accessor :activity_scope, :activity_attr, :activity_key_base, :followers_attr, :mentions_scope
+        cattr_accessor :activity_scope,
+                       :activity_attr,
+                       :activity_key_base,
+                       :followers_attr,
+                       :mentions_scope,
+                       :mentions_key_base
         self.activity_scope = options[:activity_scope] || ActsAsStream.activity_scope
         self.mentions_scope = options[:mentions_scope] || ActsAsStream.mentions_scope
         self.activity_attr = options[:activity_attr] || ActsAsStream.activity_attr
@@ -16,6 +21,7 @@ module ActsAsStream
         self.followers_attr = options[:followers_attr] || :all_followers
         send :include, ActsAsStream::StreamableObject::InstanceMethods
         unless options[:ignore_mentions]
+          self.mentions_key_base = "#{ActsAsStream.namespace}:#{self.mentions_scope}"
           send :include, ActsAsStream::StreamableObject::MentionsMethods
         end
       end
@@ -27,22 +33,23 @@ module ActsAsStream
         {self.class.name.tableize.singularize => {'id' => self.id, activity_attr.to_s => self.send(activity_attr)}}
       end
       def streamable_object_id
-        self.send(self.class.activity_attr)
+        "#{self.class.name.tableize.singularize}:#{self.send(self.class.activity_attr)}"
       end
       def activity_key
-        "#{self.class.activity_key_base}:#{streamable_object_id}"
+        "#{self.class.activity_key_base}:by:#{streamable_object_id}"
       end
       def following_key
-        "#{ActsAsStream.namespace}:#{self.class.name.tableize.singularize}:#{streamable_object_id}:#{activity_scope}"
+        "#{self.class.activity_key_base}:for:#{streamable_object_id}"
       end
       def register_activity! package
-        act_id = ActsAsStream.register_new_activity! package
+        act_id = ActsAsStream.register_new_activity! package, activity_key
         self.register_followers! act_id
         act_id
       end
 
       def delete_activity act_id
-        ActsAsStream.deregister_activity! act_id
+        ActsAsStream.deregister_activity! act_id, activity_key
+        ActsAsStream.deregister_mentions! act_id, mentions_key
       end
 
       def register_followers! act_id
@@ -60,22 +67,28 @@ module ActsAsStream
         ActsAsStream.package options
       end
 
-      def get_activity options = {}
-        if options == :all
-          ActsAsStream.get_activity_for following_key,
-                                        :page_size => activity_count,
-                                        :page => 1
-        elsif options[:since]
-          time = options[:since]
-
-        else
-          options = {:page_size => ActsAsStream.page_size, :page => 1}.merge options
-          ActsAsStream.get_activity_for following_key, :page_size => options[:page_size], :page => options[:page]
-        end
+      def get_activity_for(options = {})
+        options = {:whom => :others}.merge options
+        self.send("get_#{options[:whom]}_activity", options)
       end
+      def get_own_activity(options = {})
+        options[:key] = activity_key
+        get_activity options
+      end
+      def get_others_activity(options = {})
+        options[:key] = following_key
+        get_activity options
+      end
+      def activity_count since=nil
+        since ||= self.created_at.to_i
+        ActsAsStream.redis.zcount following_key, "(#{since}", "+inf"
+      end
+      private
 
-      def activity_count
-        ActsAsStream.redis.zcard following_key
+      def get_activity(options = {})
+        options[:page_size] = activity_count if options[:all] and activity_count > 0
+        options = {:page_size => ActsAsStream.page_size, :page => 1}.merge options
+        ActsAsStream.get_activity_for options[:key], :page_size => options[:page_size], :page => options[:page]
       end
 
     end
@@ -83,28 +96,36 @@ module ActsAsStream
     module MentionsMethods
       def register_mentions!(options = {})
         options[:mentioned_keys] = [options[:mentioned_keys]] unless options[:mentioned_keys].is_a?(Array)
-        ActsAsStream.register_mentions! :mentioned_keys => options[:mentioned_keys], :activity_id => options[:activity_id]
+        ActsAsStream.register_mentions! options
+      end
+      def mentioned_by_others_key
+        "#{self.class.mentions_key_base}:of:#{streamable_object_id}"
       end
       def mentions_key
-        "#{ActsAsStream.namespace}:#{self.class.name.tableize.singularize}:#{streamable_object_id}:#{mentions_scope}"
+        "#{self.class.mentions_key_base}:by:#{streamable_object_id}"
       end
-      def get_mentions options = {}
-        if options == :all
-          ActsAsStream.get_activity_for mentions_key,
-                                        :page_size => activity_count,
-                                        :page => 1
-        elsif options[:since]
-          time = options[:since]
+      def mentions_count since = nil
+        since ||= 0
+        ActsAsStream.redis.zcount mentioned_by_others_key, "(#{since}", "+inf"
+      end
+      def get_mentions_activity(options = {})
+        options[:key] = mentioned_by_others_key
+        get_activity options
+      end
+      def get_own_mentions_activity(options = {})
+        options[:key] = mentions_key
+        get_activity options
+      end
 
-        else
-          options = {:page_size => ActsAsStream.page_size, :page => 1}.merge options
-          ActsAsStream.get_activity_for mentions_key, :page_size => options[:page_size], :page => options[:page]
-        end
+      private
+
+      def get_mentions(options = {})
+        options[:page_size] = mentions_count if options[:all]
+        options = {:page_size => ActsAsStream.page_size, :page => 1}.merge options
+        ActsAsStream.get_activity_for options[:key], :page_size => options[:page_size], :page => options[:page]
       end
 
-      def mentions_count
-        ActsAsStream.redis.zcard mentions_key
-      end
+
     end
   end
 end

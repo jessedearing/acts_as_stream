@@ -1,26 +1,35 @@
 module ActsAsStream
   module Connector
 
-    def register_new_activity! package = nil
+    def register_new_activity! package = nil, key = nil
       return if package.nil?
       id = increment!
       ActsAsStream.redis.multi do
+        time = Time.now.to_f
         #Add the key and package to the system
         ActsAsStream.redis.set "#{base_key}:#{id}", package
         #Add the id to a sorted set scored by time
-        ActsAsStream.redis.zadd "#{base_key}:sorted", Time.now.to_f, id
+        ActsAsStream.redis.zadd "#{base_key}:sorted", time, id
+        if key.present?
+          ActsAsStream.redis.zadd key, time, id
+        end
       end
       id
     end
 
-    def deregister_activity! ident
+    def deregister_activity! ident, key = nil, mentions_key = nil
       return if ident.nil?
       ActsAsStream.redis.multi do
         ActsAsStream.redis.del "#{base_key}:#{ident}"
         ActsAsStream.redis.zrem "#{base_key}:sorted", ident
+        if key.present?
+          ActsAsStream.redis.zrem key, ident
+        end
       end
       deregister_followers! ident
-      deregister_mentioned! ident
+      if mentions_key.present?
+        deregister_mentioned! ident, mentions_key
+      end
     end
 
     def register_followers! options = {}
@@ -50,18 +59,23 @@ module ActsAsStream
     end
 
     def register_mentions! options = {}
-      options.assert_valid_keys(:mentioned_keys, :activity_id)
+      options.assert_valid_keys(:mentioned_keys, :activity_id, :key)
       return if options[:mentioned_keys].nil? or options[:activity_id].nil?
       raise ":mentioned_keys must be an array of keys" if not options[:mentioned_keys].is_a? Array
+      time = Time.now.to_f
       ActsAsStream.redis.multi do
         options[:mentioned_keys].each do |key|
-          ActsAsStream.redis.zadd key, Time.now.to_f, options[:activity_id]
+          ActsAsStream.redis.zadd key, time, options[:activity_id]
           ActsAsStream.redis.lpush "#{base_key}:mentions:#{options[:activity_id]}", key
         end
+        if options[:key].present?
+          ActsAsStream.redis.zadd options[:key], time, options[:activity_id]
+        end
       end
+      time
     end
 
-    def deregister_mentioned! activity_id = nil
+    def deregister_mentioned! activity_id = nil, key = nil
       return if activity_id.nil?
       mentioned_key = "#{base_key}:mentions:#{activity_id}"
       return if mentioned_key.nil?
@@ -73,6 +87,7 @@ module ActsAsStream
           ActsAsStream.redis.zrem f, activity_id
         end
         ActsAsStream.redis.del "#{base_key}:mentions:#{activity_id}"
+        ActsAsStream.redis.zrem key, activity_id
       end
     end
     

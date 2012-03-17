@@ -139,10 +139,10 @@ describe ActsAsStream::Connector do
 
   describe "mentions" do
     it "should not respond to mentions by default" do
-      @widget.respond_to?(:mentions_key).should be_false
+      @widget.respond_to?(:mentioned_by_others_key).should be_false
     end
     it "should allow for a mentions system" do
-      @user.respond_to?(:mentions_key).should be_true
+      @user.respond_to?(:mentioned_by_others_key).should be_true
     end
 
     it "should add a weighted record to the sorted set for a list of mentions" do
@@ -183,6 +183,7 @@ describe ActsAsStream::Connector do
       ActsAsStream.redis.llen("#{@key}:mentions:#{id}").should be(3)
 
       ActsAsStream.deregister_activity! id
+      ActsAsStream.deregister_mentioned! id
 
       mentions.each do |f|
         ActsAsStream.redis.zcard(f).should be(0)
