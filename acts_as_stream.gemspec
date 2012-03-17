@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
   s.version     = ActsAsStream::VERSION
   s.authors     = ["John Metta"]
   s.email       = ["mail@johnmetta.com"]
-  s.homepage    = "http://github.com/mettadore/acts_as_stream.git"
+  s.homepage    = "http://github.com/mettadore/acts_as_stream"
   s.summary     = "Rails injectable Redis-backed activity stream system"
   s.description = "Rails injectable Redis-backed activity stream system. This is an alpha release of code that I just wrote and put into production on 3/11/12. Send feedback and post bugs to the Github page, but use at your own risk!"
 

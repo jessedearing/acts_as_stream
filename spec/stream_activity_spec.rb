@@ -14,6 +14,13 @@ describe ActsAsStream::StreamActivity do
     @valid_json = "{\"time\":#{@time},\"who\":{\"user\":{\"id\":#{@user.id}}},\"action\":\"Tested StreamActivity!\",\"object\":{\"widget\":{\"id\":#{@widget.id}}}}"
   end
 
+  describe "parse" do
+    it "should probably parse JSON to a hash with symbol keys" do
+      hash = ActsAsStream.parse(package(@valid_options))
+      @valid_options.keys.each{|k| hash[k].should == @valid_options[k]}
+    end
+  end
+
   describe "time" do
     it "should create a valid package with all valid options" do
       package(@valid_options).should == @valid_json

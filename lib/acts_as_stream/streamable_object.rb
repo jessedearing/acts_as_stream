@@ -49,7 +49,7 @@ module ActsAsStream
 
       def delete_activity act_id
         ActsAsStream.deregister_activity! act_id, activity_key
-        ActsAsStream.deregister_mentions! act_id, mentions_key
+        ActsAsStream.deregister_mentions! act_id, mentions_key if respond_to? mentions_key
       end
 
       def register_followers! act_id
