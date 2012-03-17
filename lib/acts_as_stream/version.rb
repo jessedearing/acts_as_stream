@@ -1,3 +1,3 @@
 module ActsAsStream
-  VERSION = "0.0.3.alpha.4"
+  VERSION = "0.0.3.alpha.5"
 end
