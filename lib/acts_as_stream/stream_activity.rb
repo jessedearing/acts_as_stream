@@ -30,5 +30,14 @@ module ActsAsStream
       # then, if everything is fine, bundle it up into a JSON string
       opts.to_json
     end
+    
+    def parse package
+      package = JSON.parse(package)
+      package.keys.each{|k| package[k.to_sym] = package[k]; package.delete(k)}
+      package[:who].keys.each{|k| package[:who] = k.titleize.constantize.find(package[:who][k]["id"].to_i)}
+      package[:object].keys.each{|k| package[:object] = k.titleize.constantize.find(package[:object][k]["id"].to_i)}
+      package
+    end
+
   end
 end
