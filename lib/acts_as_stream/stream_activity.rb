@@ -34,8 +34,17 @@ module ActsAsStream
     def parse package
       package = JSON.parse(package)
       package.keys.each{|k| package[k.to_sym] = package[k]; package.delete(k)}
-      package[:who].keys.each{|k| package[:who] = k.titleize.constantize.find(package[:who][k]["id"].to_i)}
-      package[:object].keys.each{|k| package[:object] = k.titleize.constantize.find(package[:object][k]["id"].to_i)}
+      # Try to cast :who and :object to instances
+      begin
+        package[:who].keys.each{|k| package[:who] = k.titleize.constantize.find(package[:who][k]["id"].to_i)}
+      rescue
+        raise "Cannot translate :who into an instantiated model. Perhaps the model used as the creator of this activity did not have a :to_stream_hash method? The :who value is:\n #{package[:who]}"
+      end
+      begin
+        package[:object].keys.each{|k| package[:object] = k.titleize.constantize.find(package[:object][k]["id"].to_i)}
+      rescue
+        raise "Cannot translate :object into an instantiated model. Perhaps the model used as the :object in this activity did not have a :to_stream_hash method? The :object value is:\n #{package[:object]}"
+      end
       package
     end
 
