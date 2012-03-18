@@ -2,31 +2,24 @@ module ActsAsStream
   module StreamActivity
 
     def package options = {}
-      options.assert_valid_keys(:who, :action, :time, :object, :ignore_stream_hash_on)
+      options.assert_valid_keys(:who, :action, :time, :object)
       raise "You need at least a :who and an :action! to create an activity package" if options[:who].nil? or options[:action].nil?
-      opts = {:time => Time.now.to_i, :ignore_stream_hash_on => []}.merge options
+      opts = {:time => Time.now.to_i}.merge options
       # Try to ensure :time is in seconds
       opts[:time] = opts[:time].to_i if opts[:time].is_a?(Time)
 
-      # If Objects provide the :to_stream_hash method, use it.
-      if opts[:ignore_stream_hash_on].present?
-        #convenience, make sure it's an array so we can use include? instead of "include? or equals"
-        opts[:ignore_stream_hash_on] = [opts[:ignore_stream_hash_on]] unless opts[:ignore_stream_hash_on].is_a?(Array)
-      end
-
       [:who, :object].each do |opt|
         #unless we are ignoring the stream hash for this object, use StreamableObject.stream_hash
-        unless opts[:ignore_stream_hash_on].include?(opt) or not opts[opt].respond_to?(:to_stream_hash)
+        begin
           begin
             opts[opt] = opts[opt].to_stream_hash
           rescue NoMethodError
-            raise "The class #{opts[opt].class.name} does not have a method called #{opts[opt].activity_attr}. Perhaps you should look at your ActsAsStream configuration, or set :activity_attr"
+            raise "The model #{opts[opt].class.name} does not have a method called #{opts[opt].activity_attr}. Perhaps you should look at your ActsAsStream configuration, or set :activity_attr"
           end
+        rescue
+          raise "The model #{opts[opt].class.name} does not respond to the :to_stream_hash method. Make that happen, or use a custom packager"
         end
       end
-
-      opts.delete(:ignore_stream_hash_on)
-
       # then, if everything is fine, bundle it up into a JSON string
       opts.to_json
     end

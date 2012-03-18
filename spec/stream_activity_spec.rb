@@ -47,39 +47,11 @@ describe ActsAsStream::StreamActivity do
   end
 
   describe "stream_hash" do
-    it "should encode the actor as complete json" do
-      options = @valid_options.dup
-      options[:ignore_stream_hash_on] = :who
-      hash = {:who => @user, :action => options[:action], :time => options[:time], :object => @widget.to_stream_hash}
-      pack = package(options)
-      pack.should_not == @valid_json
-      decode(pack).should == decode(hash.to_json)
-    end
-    it "should encode the object as complete json" do
-      options = @valid_options.dup
-      options[:ignore_stream_hash_on] = :object
-      hash = {:who => @user.to_stream_hash, :action => options[:action], :time => options[:time], :object => @widget}
-      pack = package(options)
-      pack.should_not == @valid_json
-      decode(pack).should == decode(hash.to_json)
-    end
-
-    it "should encode the actor and object as complete json" do
-      options = @valid_options.dup
-      options[:ignore_stream_hash_on] = [:who, :object]
-      hash = {:who => @user, :action => options[:action], :time => options[:time], :object => @widget}
-      pack = package(options)
-      pack.should_not == @valid_json
-      decode(pack).should == decode(hash.to_json)
-    end
-
     it "should respond correctly with an object that does not" do
       class TestObject;end
       options = @valid_options.dup
       options[:object] = TestObject.new
-      pack = package(options)
-      options[:who] = options[:who].to_stream_hash
-      decode(pack).should == decode(options.to_json)
+      lambda {package(options)}.should raise_error
     end
   end
 
