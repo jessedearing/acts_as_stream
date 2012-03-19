@@ -30,7 +30,7 @@ module ActsAsStream
     module InstanceMethods
 
       def to_stream_hash
-        {self.class.name.tableize.singularize => {'id' => self.id, activity_attr.to_s => self.send(activity_attr)}}
+        {self.class.name.tableize.singularize.to_sym => {:id => self.id, activity_attr.to_sym => self.send(activity_attr)}}
       end
       def streamable_object_id
         "#{self.class.name.tableize.singularize}:#{self.send(self.class.activity_attr)}"

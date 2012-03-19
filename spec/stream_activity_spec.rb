@@ -47,6 +47,15 @@ describe ActsAsStream::StreamActivity do
   end
 
   describe "stream_hash" do
+    it "should correctly create a stream hash" do
+      json = {:widget =>{ :id => @widget.id}}
+      @widget.to_stream_hash.should == json
+    end
+    it "should correctly create a stream hash with a non-id attribute" do
+      json = {:admin =>{ :id => @admin.id, :guid => @admin.guid}}
+      @admin.to_stream_hash.should == json
+    end
+
     it "should respond correctly with an object that does not" do
       class TestObject;end
       options = @valid_options.dup
