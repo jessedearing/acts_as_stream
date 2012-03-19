@@ -95,9 +95,9 @@ describe ActsAsStream::Connector do
       followers.each do |f|
         ActsAsStream.redis.zcard(f).should be(1)
         ActsAsStream.redis.zrevrange(f,0,-1,:with_scores=>false).should =~ ["#{id}"]
-        ActsAsStream.redis.lrange("#{@key}:followers:#{id}",0,15).include?(f).should be_true
+        ActsAsStream.redis.lrange("#{@key}:#{id}:followers",0,15).include?(f).should be_true
       end
-      ActsAsStream.redis.llen("#{@key}:followers:#{id}").should be(3)
+      ActsAsStream.redis.llen("#{@key}:#{id}:followers").should be(3)
     end
     it "should return a correct list of packaged activities for a follower key" do
       key = @user.following_key
@@ -121,17 +121,17 @@ describe ActsAsStream::Connector do
       followers.each do |f|
         ActsAsStream.redis.zcard(f).should be(1)
         ActsAsStream.redis.zrevrange(f,0,-1,:with_scores=>false).should =~ ["#{id}"]
-        ActsAsStream.redis.lrange("#{@key}:followers:#{id}",0,15).include?(f).should be_true
+        ActsAsStream.redis.lrange("#{@key}:#{id}:followers",0,15).include?(f).should be_true
       end
-      ActsAsStream.redis.llen("#{@key}:followers:#{id}").should be(3)
+      ActsAsStream.redis.llen("#{@key}:#{id}:followers").should be(3)
 
       ActsAsStream.deregister_activity! id
 
       followers.each do |f|
         ActsAsStream.redis.zcard(f).should be(0)
-        ActsAsStream.redis.lrange("#{@key}:followers:#{id}",0,15).include?(f).should be_false
+        ActsAsStream.redis.lrange("#{@key}:#{id}:followers",0,15).include?(f).should be_false
       end
-      ActsAsStream.redis.llen("#{@key}:followers:#{id}").should be(0)
+      ActsAsStream.redis.llen("#{@key}:#{id}:followers").should be(0)
 
     end
   end
@@ -153,9 +153,9 @@ describe ActsAsStream::Connector do
       mentioned.each do |f|
         ActsAsStream.redis.zcard(f).should be(1)
         ActsAsStream.redis.zrevrange(f,0,25,:with_scores=>false).should =~ ["#{id}"]
-        ActsAsStream.redis.lrange("#{@key}:mentions:#{id}",0,15).include?(f).should be_true
+        ActsAsStream.redis.lrange("#{@key}:#{id}:mentions",0,15).include?(f).should be_true
       end
-      ActsAsStream.redis.llen("#{@key}:mentions:#{id}").should be(3)
+      ActsAsStream.redis.llen("#{@key}:#{id}:mentions").should be(3)
     end
     it "should return a correct list of packaged activities for a mentioned key" do
       key = @user.following_key
@@ -178,18 +178,18 @@ describe ActsAsStream::Connector do
       mentions.each do |f|
         ActsAsStream.redis.zcard(f).should be(1)
         ActsAsStream.redis.zrevrange(f,0,25,:with_scores=>false).should =~ ["#{id}"]
-        ActsAsStream.redis.lrange("#{@key}:mentions:#{id}",0,15).include?(f).should be_true
+        ActsAsStream.redis.lrange("#{@key}:#{id}:mentions",0,15).include?(f).should be_true
       end
-      ActsAsStream.redis.llen("#{@key}:mentions:#{id}").should be(3)
+      ActsAsStream.redis.llen("#{@key}:#{id}:mentions").should be(3)
 
       ActsAsStream.deregister_activity! id
       ActsAsStream.deregister_mentioned! id
 
       mentions.each do |f|
         ActsAsStream.redis.zcard(f).should be(0)
-        ActsAsStream.redis.lrange("#{@key}:mentions:#{id}",0,15).include?(f).should be_false
+        ActsAsStream.redis.lrange("#{@key}:#{id}:mentions",0,15).include?(f).should be_false
       end
-      ActsAsStream.redis.llen("#{@key}:mentions:#{id}").should be(0)
+      ActsAsStream.redis.llen("#{@key}:#{id}:mentions").should be(0)
 
     end
   end

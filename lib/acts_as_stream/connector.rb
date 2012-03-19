@@ -39,14 +39,14 @@ module ActsAsStream
       ActsAsStream.redis.multi do
         options[:following_keys].each do |key|
           ActsAsStream.redis.zadd key, Time.now.to_f, options[:activity_id]
-          ActsAsStream.redis.lpush "#{base_key}:followers:#{options[:activity_id]}", key
+          ActsAsStream.redis.lpush "#{base_key}:#{options[:activity_id]}:followers", key
         end
       end
     end
 
     def deregister_followers! activity_id = nil
       return if activity_id.nil?
-      followers_key = "#{base_key}:followers:#{activity_id}"
+      followers_key = "#{base_key}:#{activity_id}:followers"
       len = ActsAsStream.redis.llen followers_key
       followers = ActsAsStream.redis.lrange followers_key, 0, len
       return if followers.nil?
@@ -54,7 +54,7 @@ module ActsAsStream
         followers.each do |f|
           ActsAsStream.redis.zrem f, activity_id
         end
-        ActsAsStream.redis.del "#{base_key}:followers:#{activity_id}"
+        ActsAsStream.redis.del "#{base_key}:#{activity_id}:followers"
       end
     end
 
@@ -66,7 +66,7 @@ module ActsAsStream
       ActsAsStream.redis.multi do
         options[:mentioned_keys].each do |key|
           ActsAsStream.redis.zadd key, time, options[:activity_id]
-          ActsAsStream.redis.lpush "#{base_key}:mentions:#{options[:activity_id]}", key
+          ActsAsStream.redis.lpush "#{base_key}:#{options[:activity_id]}:mentions", key
         end
         if options[:key].present?
           ActsAsStream.redis.zadd options[:key], time, options[:activity_id]
@@ -77,7 +77,7 @@ module ActsAsStream
 
     def deregister_mentioned! activity_id = nil, key = nil
       return if activity_id.nil?
-      mentioned_key = "#{base_key}:mentions:#{activity_id}"
+      mentioned_key = "#{base_key}:#{activity_id}:mentions"
       return if mentioned_key.nil?
       len = ActsAsStream.redis.llen mentioned_key
       mentioned = ActsAsStream.redis.lrange mentioned_key, 0, len
@@ -86,7 +86,7 @@ module ActsAsStream
         mentioned.each do |f|
           ActsAsStream.redis.zrem f, activity_id
         end
-        ActsAsStream.redis.del "#{base_key}:mentions:#{activity_id}"
+        ActsAsStream.redis.del "#{base_key}:#{activity_id}:mentions"
         ActsAsStream.redis.zrem key, activity_id
       end
     end
