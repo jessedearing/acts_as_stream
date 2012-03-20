@@ -47,7 +47,7 @@ describe ActsAsStream::Connector do
 
     it "should register time keys with new activity" do
       # we're assuming this test will take less than one second!
-      time = Time.now.to_f
+      time = Time.now.to_i
       id = ActsAsStream.register_new_activity! @package
 
       ActsAsStream.redis.get("#{@key}:#{id}").should == @package
@@ -148,7 +148,7 @@ describe ActsAsStream::Connector do
     it "should add a weighted record to the sorted set for a list of mentions" do
       id = ActsAsStream.register_new_activity! @package
       mentioned = [23,32,42].map{|f| "#{@key}:user:#{f}"}
-      ActsAsStream.register_mentions! :mentioned_keys => mentioned, :activity_id => id
+      ActsAsStream.register_mentions! :mentioned_keys => mentioned, :activity_id => id, :key => "test"
 
       mentioned.each do |f|
         ActsAsStream.redis.zcard(f).should be(1)
@@ -162,18 +162,19 @@ describe ActsAsStream::Connector do
       packages = (1..3).collect{|i| test_package i}
       packages.each do |p|
         id = ActsAsStream.register_new_activity! p
-        ActsAsStream.register_mentions! :mentioned_keys => [key], :activity_id => id
+        ActsAsStream.register_mentions! :mentioned_keys => [key], :activity_id => id, :key => @user.mentions_key
       end
       ActsAsStream.total_pages(key).should be(1)
       ActsAsStream.get_activity_for(key).should =~ packages
       ActsAsStream.get_activity_for(key, :page_size => 2).size.should be(2)
       ActsAsStream.get_activity_for(key, :page_size => 2, :page => 10).count.should be(1)
+      ActsAsStream.get_activity_for(@user.mentions_key).count.should be(3)
     end
 
     it "should remove mentions on deregistration" do
       id = ActsAsStream.register_new_activity! @package
       mentions = [56,43,65].map{|f| "#{@key}:user:#{f}"}
-      ActsAsStream.register_mentions! :mentioned_keys => mentions, :activity_id => id
+      ActsAsStream.register_mentions! :mentioned_keys => mentions, :activity_id => id, :key => "test"
 
       mentions.each do |f|
         ActsAsStream.redis.zcard(f).should be(1)
@@ -183,7 +184,7 @@ describe ActsAsStream::Connector do
       ActsAsStream.redis.llen("#{@key}:#{id}:mentions").should be(3)
 
       ActsAsStream.deregister_activity! id
-      ActsAsStream.deregister_mentioned! id
+      ActsAsStream.deregister_mentioned! id, "test"
 
       mentions.each do |f|
         ActsAsStream.redis.zcard(f).should be(0)

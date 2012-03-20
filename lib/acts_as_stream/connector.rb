@@ -5,7 +5,7 @@ module ActsAsStream
       return if package.nil?
       id = increment!
       ActsAsStream.redis.multi do
-        time = Time.now.to_f
+        time = Time.now.to_i
         #Add the key and package to the system
         ActsAsStream.redis.set "#{base_key}:#{id}", package
         #Add the id to a sorted set scored by time
@@ -38,7 +38,7 @@ module ActsAsStream
       raise ":following_keys must be an array of keys" if not options[:following_keys].is_a? Array
       ActsAsStream.redis.multi do
         options[:following_keys].each do |key|
-          ActsAsStream.redis.zadd key, Time.now.to_f, options[:activity_id]
+          ActsAsStream.redis.zadd key, Time.now.to_i, options[:activity_id]
           ActsAsStream.redis.lpush "#{base_key}:#{options[:activity_id]}:followers", key
         end
       end
@@ -60,15 +60,13 @@ module ActsAsStream
 
     def register_mentions! options = {}
       options.assert_valid_keys(:mentioned_keys, :activity_id, :key)
-      return if options[:mentioned_keys].nil? or options[:activity_id].nil?
+      raise "Not all arguments present, need all of [:mentioned_keys, :activity_id, :key]" if options[:mentioned_keys].nil? or options[:activity_id].nil? or options[:key].nil?
       raise ":mentioned_keys must be an array of keys" if not options[:mentioned_keys].is_a? Array
-      time = Time.now.to_f
+      time = Time.now.to_i
       ActsAsStream.redis.multi do
         options[:mentioned_keys].each do |key|
           ActsAsStream.redis.zadd key, time, options[:activity_id]
           ActsAsStream.redis.lpush "#{base_key}:#{options[:activity_id]}:mentions", key
-        end
-        if options[:key].present?
           ActsAsStream.redis.zadd options[:key], time, options[:activity_id]
         end
       end
@@ -76,7 +74,7 @@ module ActsAsStream
     end
 
     def deregister_mentioned! activity_id = nil, key = nil
-      return if activity_id.nil?
+      raise "Need activity id and a key" if activity_id.nil? or key.nil?
       mentioned_key = "#{base_key}:#{activity_id}:mentions"
       return if mentioned_key.nil?
       len = ActsAsStream.redis.llen mentioned_key
@@ -112,6 +110,9 @@ module ActsAsStream
 
     def get_activity id
       ActsAsStream.redis.get "#{base_key}:#{id}"
+    end
+    def get_activity_mentions id
+      ActsAsStream.redis.lrange "#{base_key}:#{id}:mentions", 0, -1
     end
 
     def total_pages key, page_size = ActsAsStream.page_size

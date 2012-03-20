@@ -75,6 +75,8 @@ describe ActsAsStream::StreamableObject do
       ActsAsStream.redis.zcard(@admin.mentioned_by_others_key).should be(1)
       ActsAsStream.redis.zcard(@thing.mentioned_by_others_key).should be(1)
       ActsAsStream.redis.zcard(userb.mentioned_by_others_key).should be(0)
+
+      ActsAsStream.redis.zcard(@user.mentions_key).should be(1)
     end
     it "should return a list of all followers as a keyed list" do
       users = (1..3).collect{Factory :user}

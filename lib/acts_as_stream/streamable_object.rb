@@ -80,8 +80,8 @@ module ActsAsStream
         get_activity options
       end
       def activity_count since=nil
-        since ||= self.created_at.to_i
-        ActsAsStream.redis.zcount following_key, "(#{since}", "+inf"
+        since = since.present? ? "(#{since}" : "-inf"
+        ActsAsStream.redis.zcount following_key, since, "+inf"
       end
       private
 
@@ -95,6 +95,7 @@ module ActsAsStream
 
     module MentionsMethods
       def register_mentions!(options = {})
+        options = {:key => mentions_key}.merge options
         options[:mentioned_keys] = [options[:mentioned_keys]] unless options[:mentioned_keys].is_a?(Array)
         ActsAsStream.register_mentions! options
       end
